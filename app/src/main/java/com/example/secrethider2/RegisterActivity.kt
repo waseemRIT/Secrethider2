@@ -1,6 +1,8 @@
 package com.example.secrethider2
 
+import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
@@ -36,9 +38,11 @@ class RegisterActivity : AppCompatActivity() {
             val secret = editTextSecret.text.toString()
 
             if (username.isNotEmpty() && password.isNotEmpty() && secret.isNotEmpty()) {
+                Log.d("RegisterActivity", "Attempting to register user with username: $username, secret: $secret")
                 registerUser(username, password, secret)
             } else {
                 Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show()
+                Log.d("RegisterActivity", "Empty fields detected")
             }
         }
     }
@@ -56,23 +60,36 @@ class RegisterActivity : AppCompatActivity() {
             .post(requestBody)
             .build()
 
+        Log.d("RegisterActivity", "Sending request to $url with body: $json")
+
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
+                Log.e("RegisterActivity", "Registration request failed", e)
                 runOnUiThread {
                     Toast.makeText(this@RegisterActivity, "Registration failed", Toast.LENGTH_SHORT).show()
                 }
             }
 
             override fun onResponse(call: Call, response: Response) {
-                runOnUiThread {
-                    if (response.isSuccessful) {
+                if (response.isSuccessful) {
+                    // Log success
+                    Log.d("RegisterActivity", "Registration successful. Redirecting to login page.")
+
+                    runOnUiThread {
                         Toast.makeText(this@RegisterActivity, "Registration successful", Toast.LENGTH_SHORT).show()
-                    } else {
+                        // Redirect to LoginActivity after successful registration
+                        val intent = Intent(this@RegisterActivity, LoginActivity::class.java)
+                        startActivity(intent)
+                        finish() // Close RegisterActivity
+                    }
+                } else {
+                    runOnUiThread {
+                        Log.w("RegisterActivity", "Registration failed with message: ${response.message}")
                         Toast.makeText(this@RegisterActivity, "Registration failed: ${response.message}", Toast.LENGTH_SHORT).show()
                     }
                 }
             }
+
         })
     }
-
 }

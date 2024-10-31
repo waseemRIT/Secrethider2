@@ -58,24 +58,24 @@ class ProfileActivity : AppCompatActivity() {
             }
 
             override fun onResponse(call: Call, response: Response) {
-                runOnUiThread {
-                    if (response.isSuccessful) {
-                        // Assign response.body() to a variable to comply with the new usage
-                        val responseBody = response.body
-                        val responseString = responseBody?.string() ?: ""
-                        responseBody?.close() // Close the body after use
+                if (response.isSuccessful) {
+                    val responseString = response.body?.string() ?: ""
+                    response.close() // Close response after usage
 
-                        val jsonResponse = JSONObject(responseString)
-                        val secret = jsonResponse.optString("secret", "No secret found")
+                    // Parse JSON response
+                    val jsonResponse = JSONObject(responseString)
+                    val secret = jsonResponse.optString("secret", "No secret found")
 
+                    runOnUiThread {
                         // Display the secret in textViewSecret
                         textViewSecret.text = secret
-                    } else {
+                    }
+                } else {
+                    runOnUiThread {
                         Toast.makeText(this@ProfileActivity, "Failed to load secret: ${response.message}", Toast.LENGTH_SHORT).show()
                     }
                 }
             }
-
         })
     }
 }
