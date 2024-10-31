@@ -31,4 +31,16 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Go to Register" />
+
+    <!-- Add TextView for email and phone number -->
+    <TextView
+        android:id="@+id/contactInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="For support, contact us at:\nEmail: secrethiderthesupportteam@gmail.com\nPhone: 00971561053678"
+        android:textAlignment="center"
+        android:textSize="14sp"
+        android:layout_marginTop="16dp"
+        android:autoLink="email|phone"
+        android:paddingTop="8dp"/>
 </LinearLayout>
