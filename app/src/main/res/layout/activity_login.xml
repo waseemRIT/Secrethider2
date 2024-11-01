@@ -25,14 +25,13 @@
         android:layout_height="wrap_content"
         android:text="Login" />
 
-    <!-- New button for navigating to the Register page -->
     <Button
         android:id="@+id/buttonRegister"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Go to Register" />
 
-    <!-- Add TextView for email and phone number -->
+    <!-- TextView for support contact information -->
     <TextView
         android:id="@+id/contactInfo"
         android:layout_width="match_parent"

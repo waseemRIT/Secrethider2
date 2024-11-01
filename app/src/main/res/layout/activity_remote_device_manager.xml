@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:gravity="center_horizontal">
+
+    <!-- Title -->
+    <TextView
+        android:id="@+id/titleTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="The Mobile Remote Manager"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:paddingBottom="24dp"
+        android:textAlignment="center" />
+
+    <!-- Start/Stop Service Button -->
+    <Button
+        android:id="@+id/startServiceButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Start Remote Service"
+        android:padding="12dp"
+        android:layout_marginTop="16dp" />
+
+    <!-- Service Status Indicator -->
+    <TextView
+        android:id="@+id/serviceStatusTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Service is not running"
+        android:textSize="18sp"
+        android:paddingTop="16dp"
+        android:textColor="@android:color/holo_red_dark" />
+
+</LinearLayout>
